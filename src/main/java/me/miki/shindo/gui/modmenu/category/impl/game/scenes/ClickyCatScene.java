@@ -1,8 +1,10 @@
-package me.miki.shindo.gui.modmenu.category.impl.game.impl;
+package me.miki.shindo.gui.modmenu.category.impl.game.scenes;
 
 import me.miki.shindo.Shindo;
 import me.miki.shindo.gui.modmenu.category.impl.GamesCategory;
 import me.miki.shindo.gui.modmenu.category.impl.game.GameScene;
+import me.miki.shindo.gui.modmenu.category.impl.game.scenes.score.ScoreSaver;
+import me.miki.shindo.gui.modmenu.category.impl.game.util.DeltaTime;
 import me.miki.shindo.management.color.AccentColor;
 import me.miki.shindo.management.color.ColorManager;
 import me.miki.shindo.management.color.palette.ColorPalette;
@@ -69,6 +71,7 @@ public class ClickyCatScene extends GameScene {
 				nvg.drawCenteredText("Welcome to Clicky Cat!", getX() + (getWidth()/2F), getY() + (getHeight()/2F) - 20, palette.getFontColor(ColorType.NORMAL), 15, Fonts.SEMIBOLD);
 				nvg.drawCenteredText("CLICK to start!", getX() + (getWidth()/2F), getY() + (getHeight()/2F)- 2, palette.getFontColor(ColorType.DARK), 8, Fonts.MEDIUM);
 			} else if (gameFinished) {
+
 				nvg.drawCenteredText("Game Finished!", getX() + (getWidth()/2F), getY() + (getHeight()/2F) - 20, new Color(255, 31, 57), 15, Fonts.SEMIBOLD);
 				nvg.drawCenteredText("Your average is " + (int)(lastAverage) + " MS", getX() + (getWidth()/2F), getY() + (getHeight()/2F) - 2, palette.getFontColor(ColorType.DARK), 8, Fonts.MEDIUM);
 				if ((System.currentTimeMillis() - gameFinishedTime) > 400) {
@@ -92,6 +95,7 @@ public class ClickyCatScene extends GameScene {
 			gameFinished = true;
 			gameStarted = false;
 			gameFinishedTime = System.currentTimeMillis();
+			ScoreSaver.saveScore("ClickyCat", (int) lastAverage);
 		}
 		if (catX < getX() || catX > (getX() + getWidth())){ catX = getNewCatX(); }
 		if (catY < getY() || catY > (getY() + getHeight())){ catY = getNewCatY(); }

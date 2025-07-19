@@ -6,13 +6,14 @@ import me.miki.shindo.utils.animation.simple.SimpleAnimation;
 
 public class Profile {
 
-	private SimpleAnimation starAnimation = new SimpleAnimation();
+	private final SimpleAnimation starAnimation = new SimpleAnimation();
 	
-	private File jsonFile;
-	private int id;
-	private String name, serverIp;
+	private final File jsonFile;
+	private final int id;
+	private final String name;
+    private String serverIp;
 	private ProfileType type;
-	private ProfileIcon icon;
+	private final ProfileIcon icon;
 	
 	public Profile(int id, String serverIp, File jsonFile, ProfileIcon icon) {
 		this.id = id;

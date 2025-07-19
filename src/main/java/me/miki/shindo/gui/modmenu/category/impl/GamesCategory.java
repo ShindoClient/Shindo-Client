@@ -4,8 +4,8 @@ import me.miki.shindo.Shindo;
 import me.miki.shindo.gui.modmenu.GuiModMenu;
 import me.miki.shindo.gui.modmenu.category.Category;
 import me.miki.shindo.gui.modmenu.category.impl.game.GameScene;
-import me.miki.shindo.gui.modmenu.category.impl.game.impl.BirdScene;
-import me.miki.shindo.gui.modmenu.category.impl.game.impl.ClickyCatScene;
+import me.miki.shindo.gui.modmenu.category.impl.game.scenes.*;
+import me.miki.shindo.gui.modmenu.category.impl.game.scenes.score.ScoreScene;
 import me.miki.shindo.management.color.palette.ColorPalette;
 import me.miki.shindo.management.color.palette.ColorType;
 import me.miki.shindo.management.language.TranslateText;
@@ -32,6 +32,12 @@ public class GamesCategory extends Category {
 
 		scenes.add(new BirdScene(this));
 		scenes.add(new ClickyCatScene(this));
+		scenes.add(new SnakeScene(this));
+		scenes.add(new PongScene(this));
+		scenes.add(new TetrisScene(this));
+
+		scenes.add(new ScoreScene(this));
+
 		
 	}
 	
@@ -68,19 +74,39 @@ public class GamesCategory extends Category {
 		
 		nvg.save();
 		nvg.translate((float) -(600 - (sceneAnimation.getValue() * 600)), 0);
+
 		nvg.translate(0, scroll.getValue());
-		for(GameScene scene : scenes) {
-			
+
+        // primeiro: botões normais (exceto pontuações)
+		for (GameScene scene : scenes) {
+			if (scene instanceof ScoreScene) continue;
+
 			nvg.drawRoundedRect(this.getX() + 15, this.getY() + offsetY, this.getWidth() - 30, 40, 8, palette.getBackgroundColor(ColorType.DARK));
-			//nvg.drawRoundedRect(this.getX() + 15, this.getY() + offsetY + 19.5F, this.getWidth() - 30, 1F, 0, new Color(255, 200, 10));
 			nvg.drawText(scene.getIcon(), this.getX() + 26, this.getY() + offsetY + 13F, palette.getFontColor(ColorType.DARK), 14, Fonts.LEGACYICON);
 			nvg.drawText(scene.getName(), this.getX() + 47, this.getY() + offsetY + 9F, palette.getFontColor(ColorType.DARK), 12.5F, Fonts.MEDIUM);
 			nvg.drawText(scene.getDescription(), this.getX() + 47, this.getY() + offsetY + 23, palette.getFontColor(ColorType.NORMAL), 7.5F, Fonts.REGULAR);
 			nvg.drawText(LegacyIcon.CHEVRON_RIGHT, this.getX() + this.getWidth() - 32, this.getY() + offsetY + 15, palette.getFontColor(ColorType.NORMAL), 10, Fonts.LEGACYICON);
-			
-			offsetY+=50;
+
+			offsetY += 50;
 		}
-		
+
+        // separador
+		nvg.drawRoundedRect(this.getX() + 20, this.getY() + offsetY, this.getWidth() - 40, 5, 3F, palette.getFontColor(ColorType.DARK));
+		offsetY += 15;
+
+        // agora o botão de pontuações
+		for (GameScene scene : scenes) {
+			if (scene instanceof ScoreScene) {
+				nvg.drawRoundedRect(this.getX() + 15, this.getY() + offsetY, this.getWidth() - 30, 40, 8, palette.getBackgroundColor(ColorType.DARK));
+				nvg.drawText(scene.getIcon(), this.getX() + 26, this.getY() + offsetY + 13F, palette.getFontColor(ColorType.DARK), 14, Fonts.LEGACYICON);
+				nvg.drawText(scene.getName(), this.getX() + 47, this.getY() + offsetY + 9F, palette.getFontColor(ColorType.DARK), 12.5F, Fonts.MEDIUM);
+				nvg.drawText(scene.getDescription(), this.getX() + 47, this.getY() + offsetY + 23, palette.getFontColor(ColorType.NORMAL), 7.5F, Fonts.REGULAR);
+				nvg.drawText(LegacyIcon.CHEVRON_RIGHT, this.getX() + this.getWidth() - 32, this.getY() + offsetY + 15, palette.getFontColor(ColorType.NORMAL), 10, Fonts.LEGACYICON);
+
+				offsetY += 50;
+			}
+		}
+
 		nvg.restore();
 		
 		nvg.save();
@@ -91,6 +117,9 @@ public class GamesCategory extends Category {
 		}
 		
 		nvg.restore();
+
+		int index = scenes.size();
+		scroll.setMaxScroll((index - (index > 5 ? 4.91F : index)) * 56);
 	}
 	
 	@Override

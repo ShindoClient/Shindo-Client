@@ -30,9 +30,9 @@ import java.util.Collections;
 public class GuiEditHUD extends GuiScreen {
 
 	private Animation introAnimation;
-	private boolean fromModMenu;
+	private final boolean fromModMenu;
 	private boolean snapping, canSnap;
-	private ArrayList<HUDMod> mods;
+	private final ArrayList<HUDMod> mods;
 	int localMouseX = -1, localMouseY = -1;
 	
 	public GuiEditHUD(boolean fromModMenu) {

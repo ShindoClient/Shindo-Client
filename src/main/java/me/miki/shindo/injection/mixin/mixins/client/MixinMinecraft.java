@@ -2,6 +2,7 @@ package me.miki.shindo.injection.mixin.mixins.client;
 
 import eu.shoroa.contrib.render.ShBlur;
 import me.miki.shindo.Shindo;
+import me.miki.shindo.gui.GuiBetterResourcePacks;
 import me.miki.shindo.gui.GuiSplashScreen;
 import me.miki.shindo.injection.interfaces.IMixinEntityLivingBase;
 import me.miki.shindo.injection.interfaces.IMixinMinecraft;
@@ -13,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiScreenResourcePacks;
 import net.minecraft.client.gui.GuiScreenWorking;
 import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -298,13 +300,28 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
     	new GuiSplashScreen().draw();
     	ci.cancel();
     }
-    
-    @Inject(method = "displayGuiScreen", at = @At("RETURN"), cancellable = true)
-    public void displayGuiScreenInject(GuiScreen guiScreenIn, CallbackInfo ci) {
+
+
+    @Inject(method = "displayGuiScreen", at = @At("RETURN"))
+    public void displayGuiScreenInjectReturn(GuiScreen guiScreenIn, CallbackInfo ci) {
     	if(guiScreenIn instanceof GuiMainMenu) {
 			displayGuiScreen(Shindo.getInstance().getShindoAPI().getMainMenu());
     	}
     }
+
+	@Inject(method = "displayGuiScreen", at = @At("HEAD"), cancellable = true)
+	public void displayGuiScreenInjectHead(GuiScreen guiScreenIn, CallbackInfo ci) {
+
+		if (guiScreenIn instanceof GuiScreenResourcePacks && !(guiScreenIn instanceof GuiBetterResourcePacks)) {
+			GuiScreen parent = Minecraft.getMinecraft().currentScreen;
+
+			ci.cancel();
+
+			Minecraft.getMinecraft().addScheduledTask(() -> displayGuiScreen(new GuiBetterResourcePacks(parent)));
+		}
+	}
+
+
     
     @Inject(method = "loadWorld(Lnet/minecraft/client/multiplayer/WorldClient;Ljava/lang/String;)V", at = @At("HEAD"))
     private void clearLoadedMaps(WorldClient worldClientIn, String loadingMessage, CallbackInfo ci) {

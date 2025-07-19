@@ -1,8 +1,10 @@
-package me.miki.shindo.gui.modmenu.category.impl.game.impl;
+package me.miki.shindo.gui.modmenu.category.impl.game.scenes;
 
 import me.miki.shindo.Shindo;
 import me.miki.shindo.gui.modmenu.category.impl.GamesCategory;
 import me.miki.shindo.gui.modmenu.category.impl.game.GameScene;
+import me.miki.shindo.gui.modmenu.category.impl.game.scenes.score.ScoreSaver;
+import me.miki.shindo.gui.modmenu.category.impl.game.util.DeltaTime;
 import me.miki.shindo.management.color.AccentColor;
 import me.miki.shindo.management.color.ColorManager;
 import me.miki.shindo.management.color.palette.ColorPalette;
@@ -22,7 +24,7 @@ public class BirdScene extends GameScene {
 	// game stuff
 	private int x, y, width, height, score = 0;
 	private boolean gameStarted = false, shouldStart = false;
-	private float gravity = 300F;
+	private final float gravity = 300F;
 
 
 	// pipe stuff
@@ -30,7 +32,10 @@ public class BirdScene extends GameScene {
 	private float pipeOneX, pipeTwoX, pipeOneYGap, pipeTwoYGap, pipeSpeed;
 
 	// player stuff
-	private float playerWidth = 15, playerTargetYPosition = 0, playerActualYPosition = 0, playerX;
+	private final float playerWidth = 15;
+    private float playerTargetYPosition = 0;
+    private float playerActualYPosition = 0;
+    private float playerX;
 	private boolean inPipeOne = false, inPipeTwo = false, isPlayerDead = false;
 
 	long deathTime = 0L;
@@ -68,23 +73,21 @@ public class BirdScene extends GameScene {
 			drawPipes(nvg);
 			if (!isPlayerDead) { detectCollisions(); }
 		} else {
-			if(isPlayerDead) {
-				nvg.drawCenteredText("You Died!", x + (width/2), y +(height/2) - 20, new Color(255, 31, 57), 15, Fonts.SEMIBOLD);
-				nvg.drawCenteredText("Your score is " + score, x + (width/2), y +(height/2)- 2, palette.getFontColor(ColorType.DARK), 8, Fonts.MEDIUM);
+			if (isPlayerDead) {
+				nvg.drawCenteredText("You Died!", x + (width/2F), y +(height/2F) - 20, new Color(255, 31, 57), 15, Fonts.SEMIBOLD);
+				nvg.drawCenteredText("Your score is " + score, x + (width/2F), y +(height/2F)- 2, palette.getFontColor(ColorType.DARK), 8, Fonts.MEDIUM);
 				if (System.currentTimeMillis() - deathTime >= 400) {
-					nvg.drawCenteredText("Press SPACE or CLICK to start!", x + (width/2), y +(height) - 20, palette.getFontColor(ColorType.DARK), 8, Fonts.MEDIUM);
+					nvg.drawCenteredText("Press SPACE or CLICK to start!", x + (width/2F), y +(height) - 20, palette.getFontColor(ColorType.DARK), 8, Fonts.MEDIUM);
 				}
-				if (shouldStart) {
-					startGame();
-				}
-			} else {
-				nvg.drawCenteredText("Welcome to Bird!", x + (width/2), y +(height/2) - 20, palette.getFontColor(ColorType.NORMAL), 15, Fonts.SEMIBOLD);
-				nvg.drawCenteredText("Press SPACE or CLICK to start!", x + (width/2), y +(height/2)- 2, palette.getFontColor(ColorType.DARK), 8, Fonts.MEDIUM);
-				if (shouldStart) {
-					startGame();
-				}
-			}
-		}
+
+            } else {
+				nvg.drawCenteredText("Welcome to Flappy Shindo!", x + (width/2F), y +(height/2F) - 20, palette.getFontColor(ColorType.NORMAL), 15, Fonts.SEMIBOLD);
+				nvg.drawCenteredText("Press SPACE or CLICK to start!", x + (width/2F), y +(height/2F)- 2, palette.getFontColor(ColorType.DARK), 8, Fonts.MEDIUM);
+            }
+            if (shouldStart) {
+                startGame();
+            }
+        }
 		nvg.restore();
 		nvg.drawOutlineRoundedRect(x, y, width, height, 10, 8, palette.getBackgroundColor(ColorType.NORMAL));
 	}
@@ -119,6 +122,7 @@ public class BirdScene extends GameScene {
 		deathTime = System.currentTimeMillis();
 		isPlayerDead = true;
 		gameStarted = false;
+		ScoreSaver.saveScore("Flappy Shindo", score);
 	}
 
 	private void detectCollisions(){
@@ -180,14 +184,14 @@ public class BirdScene extends GameScene {
 
 	private void startGame(){
 		pipeOneX = x + width + pipeWidth;
-		pipeTwoX = x + width + (width /2) + pipeWidth;
+		pipeTwoX = x + width + (width /2F) + pipeWidth;
 		pipeOneYGap = getNewPipeHeight();
 		pipeTwoYGap = getNewPipeHeight();
 		pipeSpeed = 100f;
 		score = 0;
 		playerX = x + 40;
-		playerTargetYPosition = height/2;
-		playerActualYPosition = height/2;
+		playerTargetYPosition = height/2F;
+		playerActualYPosition = height/2F;
 		inPipeOne = false;
 		inPipeTwo = false;
 		isPlayerDead = false;

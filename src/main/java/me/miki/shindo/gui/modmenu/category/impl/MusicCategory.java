@@ -12,6 +12,7 @@ import me.miki.shindo.management.mods.impl.InternalSettingsMod;
 import me.miki.shindo.management.music.Music;
 import me.miki.shindo.management.music.MusicManager;
 import me.miki.shindo.management.music.MusicType;
+import me.miki.shindo.management.music.ytdlp.YouTubeUrlCleaner;
 import me.miki.shindo.management.nanovg.NanoVGManager;
 import me.miki.shindo.management.nanovg.font.Fonts;
 import me.miki.shindo.management.nanovg.font.LegacyIcon;
@@ -214,7 +215,7 @@ public class MusicCategory extends Category {
 					
 					instance.getNotificationManager().post(TranslateText.MUSIC, TranslateText.ADDED_MUSIC_QUEUE, NotificationType.INFO);
 					
-					if(musicManager.getYtdlp().download(textBox.getText())) {
+					if(musicManager.getYtdlp().download(YouTubeUrlCleaner.cleanUrl(textBox.getText()))) {
 						instance.getNotificationManager().post(TranslateText.MUSIC, TranslateText.MUSIC_DOWNLOAD_COMPLETE, NotificationType.SUCCESS);
 						musicManager.load();
 					} else {

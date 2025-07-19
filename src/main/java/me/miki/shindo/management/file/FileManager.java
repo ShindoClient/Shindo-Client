@@ -16,6 +16,8 @@ public class FileManager {
 	private final File musicDir;
     private final File profileDir;
     private final File screenshotDir;
+	private final File addonsDir;
+	private final File gamesDir;
 
 	private final File serversDir;
 
@@ -35,6 +37,8 @@ public class FileManager {
 		musicDir = new File(shindoDir, "music");
 		profileDir = new File(shindoDir, "profile");
 		screenshotDir = new File(shindoDir, "screenshots");
+		addonsDir = new File(shindoDir, "addons");
+		gamesDir = new File(shindoDir, "games");
 
 		serversDir = new File(shindoDir, "servers");
 
@@ -59,6 +63,8 @@ public class FileManager {
 			if(!musicDir.exists()) createDir(musicDir);
 			if(!profileDir.exists()) createDir(profileDir);
 			if(!screenshotDir.exists()) createDir(screenshotDir);
+			if(!addonsDir.exists()) createDir(addonsDir);
+			if(!gamesDir.exists()) createDir(gamesDir);
 
 			if(!serversDir.exists()) createDir(serversDir);
 
@@ -115,6 +121,14 @@ public class FileManager {
 
 	public File getScreenshotDir() {
 		return screenshotDir;
+	}
+
+	public File getAddonsDir() {
+		return addonsDir;
+	}
+
+	public File getGamesDir() {
+		return gamesDir;
 	}
 
 	public File getServersDir() {

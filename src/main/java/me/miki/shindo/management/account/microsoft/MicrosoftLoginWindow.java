@@ -26,8 +26,6 @@ public class MicrosoftLoginWindow  extends JFrame {
 
     private final Runnable afterLogin;
 
-    private static String LOGIN_URL = "";
-
     public MicrosoftLoginWindow(Runnable afterLogin) {
         this.setTitle("Connect with Microsoft");
         this.setSize(600, 700);
@@ -59,7 +57,7 @@ public class MicrosoftLoginWindow  extends JFrame {
         });
 
         webView.getEngine().setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");
-        webView.getEngine().load(LOGIN_URL);
+        webView.getEngine().load("https://login.live.com/oauth20_authorize.srf?client_id=000000004C12AE6F&response_type=code&redirect_uri=https://login.live.com/oauth20_desktop.srf&scope=XboxLive.signin%20offline_access&prompt=login");
         content.setScene(new Scene(webView, this.getWidth(), this.getHeight()));
         this.setVisible(true);
     }

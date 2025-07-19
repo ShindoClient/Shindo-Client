@@ -55,19 +55,21 @@ public class AccountManager {
 		}
 		
 		if(getAccountByName(currentAccount) != null) {
-			
+
 			if (getAccountByName(currentAccount).getType().equals(AccountType.MICROSOFT)) {
+				ShindoLogger.info("Login into Microsoft account");
 				Multithreading.runAsync(()-> {
 					authenticator.loginWithRefreshToken(getAccountByName(currentAccount).getRefreshToken());
 				});
 			} else {
-				
+				ShindoLogger.info("Login into Offline account");
 				Account acc = getAccountByName(currentAccount);
 				File f = new File(skinDir, acc.getName() + ".png");
 
 				UUID offlineId = UUID.nameUUIDFromBytes(
 						("OfflinePlayer:" + acc.getName()).getBytes(StandardCharsets.UTF_8)
 				);
+
 		        ((IMixinMinecraft) mc).setSession(new Session(acc.getName(), offlineId.toString(), "0", "mojang"));
 		        
 		        if(f.exists()) {

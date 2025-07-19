@@ -30,6 +30,7 @@ import me.miki.shindo.management.waypoint.WaypointManager;
 import me.miki.shindo.ui.ClickEffects;
 import me.miki.shindo.utils.OptifineUtils;
 import me.miki.shindo.utils.Sound;
+import me.miki.shindo.management.addons.rpo.RPOConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
@@ -75,7 +76,7 @@ public class Shindo {
 	public Shindo() {
 		name = "Shindo";
 		version = "5.1.05";
-		verIdentifier = 5102;
+		verIdentifier = 5105;
 	}
 	
 	public void start() {
@@ -119,6 +120,8 @@ public class Shindo {
 		discordStats.check();
 		update = new Update();
 		update.check();
+
+		RPOConfig.init();
 
 		eventManager.register(new ShindoHandler());
 

@@ -32,6 +32,12 @@ public class MainScene extends MainMenuScene {
 	@Override
 	public void initGui() {
 		if (!isConnected) {
+			try {
+				Thread.sleep(3000L);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
 			Shindo.getInstance().getShindoAPI().connect();
 			Shindo.getInstance().getNotificationManager().post("[API]", "Is now Connected", NotificationType.INFO);
 			isConnected = true;

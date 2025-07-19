@@ -1,9 +1,15 @@
 package me.miki.shindo.gui.modmenu.category.impl;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Objects;
 
 import me.miki.shindo.Shindo;
+import me.miki.shindo.logger.ShindoLogger;
+import me.miki.shindo.management.notification.NotificationType;
+import me.miki.shindo.utils.Multithreading;
+import me.miki.shindo.utils.file.FileUtils;
 import org.lwjgl.input.Keyboard;
 
 import me.miki.shindo.gui.modmenu.GuiModMenu;
@@ -30,14 +36,15 @@ import me.miki.shindo.utils.animation.normal.Direction;
 import me.miki.shindo.utils.animation.normal.other.SmoothStepAnimation;
 import me.miki.shindo.utils.mouse.MouseUtils;
 
+import javax.imageio.ImageIO;
+
 public class ProfileCategory extends Category {
-// todo: ADD SCROLL tf why isnt that here xd
 	private ProfileType currentType;
 	private Animation profileAnimation;
 	private boolean openProfile;
 	private ProfileIcon currentIcon;
-	private CompTextBox nameBox = new CompTextBox();
-	private CompTextBox serverIpBox = new CompTextBox();
+	private final CompTextBox nameBox = new CompTextBox();
+	private final CompTextBox serverIpBox = new CompTextBox();
 	
 	public ProfileCategory(GuiModMenu parent) {
 		super(parent, TranslateText.PROFILE, LegacyIcon.EDIT, true, true);
@@ -85,7 +92,7 @@ public class ProfileCategory extends Category {
 		// Draw profile scene
 		nvg.save();
 		nvg.translate((float) -(600 - (profileAnimation.getValue() * 600)), 0);
-		
+
 		for(ProfileType t : ProfileType.values()) {
 			
 			float textWidth = nvg.getTextWidth(t.getName(), 9, Fonts.MEDIUM);
@@ -103,18 +110,21 @@ public class ProfileCategory extends Category {
 			
 			nvg.drawText(t.getName(), this.getX() + 15 + offsetX + ((textWidth + 20) - textWidth) / 2, this.getY() + offsetY + 1.5F, textColor, 9, Fonts.MEDIUM);
 			
-			offsetX+=textWidth + 28;
+			offsetX+= (int) (textWidth + 28);
 		}
 		
 		offsetX = 0;
 		offsetY = offsetY + 23;
+
+		nvg.scissor(this.getX() + 10, this.getY() + 33, this.getWidth() - 10, this.getHeight() - 33);
+		nvg.translate(0, scroll.getValue());
 		
 		for(Profile p : profileManager.getProfiles()) {
 			
 			if(filter(p)) {
 				continue;
 			}
-			
+
 			nvg.drawRoundedRect(this.getX() + 15 + offsetX, this.getY() + offsetY, 123, 46, 6, palette.getBackgroundColor(ColorType.DARK));
 			
 			if(p.getIcon() != null) {
@@ -126,7 +136,7 @@ public class ProfileCategory extends Category {
 			}
 			
 			if(p.getId() == 999) {
-				nvg.drawCenteredText(LegacyIcon.PLUS, this.getX() + offsetX + 14.5F + (123 / 2), this.getY() + offsetY + 13, palette.getFontColor(ColorType.DARK), 20, Fonts.LEGACYICON);
+				nvg.drawCenteredText(LegacyIcon.PLUS, this.getX() + offsetX + 14.5F + (123 / 2F), this.getY() + offsetY + 13, palette.getFontColor(ColorType.DARK), 20, Fonts.LEGACYICON);
 			}else {
 				nvg.drawText(LegacyIcon.STAR, this.getX() + 62 + offsetX, this.getY() + 29 + offsetY, palette.getMaterialYellow(), 11, Fonts.LEGACYICON);
 				
@@ -161,17 +171,17 @@ public class ProfileCategory extends Category {
 		nvg.drawRect(this.getX() + 15, this.getY() + offsetY + 27, this.getWidth() - 30, 1, palette.getBackgroundColor(ColorType.NORMAL));
 		nvg.drawText(TranslateText.ADD_PROFILE.getText(), this.getX() + 26, this.getY() + offsetY + 9, palette.getFontColor(ColorType.DARK), 13, Fonts.MEDIUM);
 		nvg.drawText(TranslateText.ICON.getText(), this.getX() + 30, this.getY() + offsetY + 35, palette.getFontColor(ColorType.DARK), 13, Fonts.MEDIUM);
-		
+
 		for(ProfileIcon icon : ProfileIcon.values()) {
-			
+
 			int alpha = (int) (icon.getAnimation().getValue() * 255);
-			
+
 			icon.getAnimation().setAnimation(currentIcon.equals(icon) ? 1.0F : 0.0F, 16);
-			
+
 			nvg.drawRoundedImage(icon.getIcon(), this.getX() + 32 + offsetX, this.getY() + offsetY + 53, 32, 32, 6);
-			
+
 			nvg.drawGradientOutlineRoundedRect(this.getX() + 32 + offsetX, this.getY() + offsetY + 53, 32, 32, 6, 1.6F * icon.getAnimation().getValue(), ColorUtils.applyAlpha(accentColor.getColor1(), alpha), ColorUtils.applyAlpha(accentColor.getColor2(), alpha));
-			
+
 			offsetX+=40;
 		}
 		
@@ -193,6 +203,14 @@ public class ProfileCategory extends Category {
 				palette.getFontColor(ColorType.DARK), 10, Fonts.REGULAR);
 		
 		nvg.restore();
+
+		int scrollMax = 0;
+
+		if (index > 9) {
+			scrollMax += (int) Math.ceil((index - 9) / 3.0);
+		}
+
+		scroll.setMaxScroll(scrollMax * 56);
 	}
 	
 	@Override
@@ -214,9 +232,10 @@ public class ProfileCategory extends Category {
 			offsetX = 0;
 
 			for(ProfileIcon icon : ProfileIcon.values()) {
+
 				
 				if(MouseUtils.isInside(mouseX, mouseY, this.getX() + 32 + offsetX, this.getY() + offsetY + 53, 32, 32) && mouseButton == 0) {
-					currentIcon = icon;
+						currentIcon = icon;
 				}
 				
 				offsetX+=40;
@@ -254,7 +273,7 @@ public class ProfileCategory extends Category {
 					}
 				}
 				
-				offsetX+=textWidth + 28;
+				offsetX+= (int) (textWidth + 28);
 			}
 			
 			offsetX = 0;
@@ -268,9 +287,9 @@ public class ProfileCategory extends Category {
 				
 				if(mouseButton == 0) {
 					
-					boolean favorite = MouseUtils.isInside(mouseX, mouseY, this.getX() + 61 + offsetX, this.getY() + 28 + offsetY, 13, 13);
-					boolean delete = MouseUtils.isInside(mouseX, mouseY, this.getX() + 62 + 13 + offsetX, this.getY() + 28 + offsetY, 13, 13);
-					boolean inside = MouseUtils.isInside(mouseX, mouseY, this.getX() + 15 + offsetX, this.getY() + offsetY, 123, 46);
+					boolean favorite = MouseUtils.isInside(mouseX, mouseY, this.getX() + 61 + offsetX, this.getY() + 28 + offsetY + scroll.getValue(), 13, 13);
+					boolean delete = MouseUtils.isInside(mouseX, mouseY, this.getX() + 62 + 13 + offsetX, this.getY() + 28 + offsetY + scroll.getValue(), 13, 13);
+					boolean inside = MouseUtils.isInside(mouseX, mouseY, this.getX() + 15 + offsetX, this.getY() + offsetY + scroll.getValue(), 123, 46);
 					
 					if(inside) {
 						

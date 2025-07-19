@@ -26,9 +26,8 @@ import java.util.Map;
 
 public class MicrosoftAuthentication {
 
-    private static String CLIENT_ID = "";
-    private Minecraft mc = Minecraft.getMinecraft();
-    private SkinDownloader skinDownloader;
+    private final Minecraft mc = Minecraft.getMinecraft();
+    private final SkinDownloader skinDownloader;
 
     public MicrosoftAuthentication() {
         skinDownloader = new SkinDownloader();
@@ -36,9 +35,11 @@ public class MicrosoftAuthentication {
 
     public void loginWithRefreshToken(String refreshToken) {
 
-        JsonObject response = HttpUtils.readJson("https://login.live.com/oauth20_token.srf?client_id="+ CLIENT_ID + "&grant_type=refresh_token&refresh_token=" + refreshToken, null);
-
+        ShindoLogger.info("[DEBUG] call login with refresh token ");
+        JsonObject response = HttpUtils.readJson("https://login.live.com/oauth20_token.srf?client_id=000000004C12AE6F&grant_type=refresh_token&refresh_token=" + refreshToken, null);
+        ShindoLogger.info("[DEBUG] call login with refresh token after refresh token url");
         if(response.get("access_token") == null) {
+            ShindoLogger.error("[DEBUG] call login with refresh token failed");
             return;
         }
 
@@ -60,7 +61,7 @@ public class MicrosoftAuthentication {
 
     private void getMicrosoftToken(URL tokenURL) {
 
-        JsonObject response = HttpUtils.readJson("https://login.live.com/oauth20_token.srf?client_id=" + CLIENT_ID + "&grant_type=authorization_code&redirect_uri=https://login.live.com/oauth20_desktop.srf&code=" + tokenURL.toString().split("=")[1], null);
+        JsonObject response = HttpUtils.readJson("https://login.live.com/oauth20_token.srf?client_id=000000004C12AE6F&grant_type=authorization_code&redirect_uri=https://login.live.com/oauth20_desktop.srf&code=" + tokenURL.toString().split("=")[1], null);
 
         getXboxLiveToken(response.get("access_token").getAsString(), response.get("refresh_token").getAsString());
     }

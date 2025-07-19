@@ -1,4 +1,4 @@
-package me.miki.shindo.gui.modmenu.category.impl.game.impl;
+package me.miki.shindo.gui.modmenu.category.impl.game.util;
 
 public class DeltaTime {
     private long lastTime;

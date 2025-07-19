@@ -7,10 +7,10 @@ public enum ProfileIcon {
 	COMMAND(0, "command"), CRAFTING_TABLE(1, "crafting_table"), FURNACE(2, "furnace"), GRASS(3, "grass"), 
 	HAY(4, "hay"), PUMPKIN(5, "pumpkin"), TNT(6, "tnt");
 	
-	private SimpleAnimation animation = new SimpleAnimation();
+	private final SimpleAnimation animation = new SimpleAnimation();
 	
-	private int id;
-	private ResourceLocation icon;
+	private final int id;
+	private final ResourceLocation icon;
 	
 	private ProfileIcon(int id, String name) {
 		this.id = id;
