@@ -1,6 +1,6 @@
 
 ## More features, fixes and quality of life.
-### Join our discord! https://MikiDevAHM.github.io/discord
+### Join our discord! https://shindoclient.github.io/discord
 <br>
 
 
