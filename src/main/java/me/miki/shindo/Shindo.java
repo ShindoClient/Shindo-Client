@@ -24,6 +24,7 @@ import me.miki.shindo.management.remote.discord.DiscordStats;
 import me.miki.shindo.management.remote.download.DownloadManager;
 import me.miki.shindo.management.remote.news.NewsManager;
 import me.miki.shindo.management.remote.update.Update;
+import me.miki.shindo.management.roles.ClientRoleManager;
 import me.miki.shindo.management.screenshot.ScreenshotManager;
 import me.miki.shindo.management.security.SecurityFeatureManager;
 import me.miki.shindo.management.waypoint.WaypointManager;
@@ -75,8 +76,8 @@ public class Shindo {
 	
 	public Shindo() {
 		name = "Shindo";
-		version = "5.1.05";
-		verIdentifier = 5105;
+		version = "5.1.06";
+		verIdentifier = 5106;
 	}
 	
 	public void start() {
@@ -134,6 +135,7 @@ public class Shindo {
 		ShindoLogger.info("Stopping Shindo");
 		profileManager.save();
 		accountManager.save();
+		ClientRoleManager.stop();
 		shindoAPI.disconnect();
 		Sound.play("shindo/audio/close.wav", true);
 	}

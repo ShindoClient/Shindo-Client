@@ -8,6 +8,7 @@ import me.miki.shindo.management.nanovg.NanoVGManager;
 import me.miki.shindo.management.nanovg.font.Fonts;
 import me.miki.shindo.management.nanovg.font.LegacyIcon;
 import me.miki.shindo.management.notification.NotificationType;
+import me.miki.shindo.management.roles.ClientRoleManager;
 import me.miki.shindo.utils.animation.simple.SimpleAnimation;
 import me.miki.shindo.utils.mouse.MouseUtils;
 import net.minecraft.client.gui.GuiMultiplayer;
@@ -40,6 +41,7 @@ public class MainScene extends MainMenuScene {
 
 			Shindo.getInstance().getShindoAPI().connect();
 			Shindo.getInstance().getNotificationManager().post("[API]", "Is now Connected", NotificationType.INFO);
+			ClientRoleManager.start();
 			isConnected = true;
 		}
 	}

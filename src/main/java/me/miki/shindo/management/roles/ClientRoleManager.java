@@ -4,8 +4,14 @@ import me.miki.shindo.Shindo;
 import me.miki.shindo.ShindoAPI;
 
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class ClientRoleManager {
+
+    private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private static final int UPDATE_INTERVAL_SECONDS = 30; // ajuste o tempo conforme necessário
 
     private static final Map<UUID, ClientRole> roleCache = new HashMap<>();
 
@@ -15,6 +21,14 @@ public class ClientRoleManager {
             ClientRole.GOLD,
             ClientRole.MEMBER
     );
+
+    public static void start() {
+        scheduler.scheduleAtFixedRate(ClientRoleManager::clearCache, 0, UPDATE_INTERVAL_SECONDS, TimeUnit.SECONDS);
+    }
+
+    public static void stop() {
+        scheduler.shutdownNow();
+    }
 
     public static ClientRole getRole(UUID uuid) {
         if (roleCache.containsKey(uuid)) {

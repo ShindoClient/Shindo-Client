@@ -30,7 +30,7 @@ public class ModManager {
 		mods.add(new CalendarMod());
 		mods.add(new ChatMod());
 		mods.add(new ChatTranslateMod());
-		mods.add(new ChunkAnimatorMod());
+		//mods.add(new ChunkAnimatorMod());
 		mods.add(new ChunkBordersMod());
 		mods.add(new ClearGlassMod());
 		mods.add(new ClearWaterMod());
