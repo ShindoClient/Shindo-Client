@@ -309,17 +309,17 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
     	}
     }
 
-	@Inject(method = "displayGuiScreen", at = @At("HEAD"), cancellable = true)
-	public void displayGuiScreenInjectHead(GuiScreen guiScreenIn, CallbackInfo ci) {
-
-		if (guiScreenIn instanceof GuiScreenResourcePacks && !(guiScreenIn instanceof GuiBetterResourcePacks)) {
-			GuiScreen parent = Minecraft.getMinecraft().currentScreen;
-
-			ci.cancel();
-
-			Minecraft.getMinecraft().addScheduledTask(() -> displayGuiScreen(new GuiBetterResourcePacks(parent)));
-		}
-	}
+	//@Inject(method = "displayGuiScreen", at = @At("HEAD"), cancellable = true)
+	//public void displayGuiScreenInjectHead(GuiScreen guiScreenIn, CallbackInfo ci) {
+	//
+ 	//	if (guiScreenIn instanceof GuiScreenResourcePacks && !(guiScreenIn instanceof GuiBetterResourcePacks)) {
+	//		GuiScreen parent = Minecraft.getMinecraft().currentScreen;
+	//
+ 	//		ci.cancel();
+	//
+ 	//		Minecraft.getMinecraft().addScheduledTask(() -> displayGuiScreen(new GuiBetterResourcePacks(parent)));
+	//	}
+	//}
 
 
     

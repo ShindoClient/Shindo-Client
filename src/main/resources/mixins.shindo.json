@@ -43,7 +43,6 @@
     "gui.MixinGuiNewChat",
     "gui.MixinGuiOptions",
     "gui.MixinGuiPlayerTabOverlay",
-    "gui.MixinGuiPlayerTabOverlay$PlayerComparator",
     "gui.MixinGuiScreen",
     "gui.MixinGuiScreenBook",
     "gui.MixinGuiScreenResourcePacks",

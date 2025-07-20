@@ -70,9 +70,11 @@ dependencies {
     }
     embed(files('libs/lwjgl-shindo.jar'))
     embed(files('libs/lwjgl-shindo-natives.jar'))
+    embed(files('libs/jfxrt.jar'))
+    embed(files('libs/ViaBackwards-4.7.0-1.20-pre1-SNAPSHOT.jar'))
+    embed(files('libs/ViaRewind-2.0.4-SNAPSHOT.jar'))
+    embed(files('libs/ViaVersion-4.7.0-1.20-pre2-SNAPSHOT.jar'))
 
-    embed('javazoom:jlayer:1.0.1')
-    embed("com.github.wendykierp:JTransforms:3.1")
     embed("com.google.code.gson:gson:2.10.1")
 }
 
@@ -97,7 +99,7 @@ jar {
     manifest.attributes(
             "MixinConfigs": "mixins.shindo.json",
             "TweakClass": "me.miki.shindo.injection.mixin.ShindoTweaker",
-            "TweakOrder": 0, // valor maior que o do OptiFine
+            "TweakOrder": 0,
             "Manifest-Version": 1.0,
             "FMLAT": "shindo_at.cfg"
     )

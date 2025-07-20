@@ -121,7 +121,7 @@ public class Shindo {
 		update = new Update();
 		update.check();
 
-		RPOConfig.init();
+		//RPOConfig.init();
 
 		eventManager.register(new ShindoHandler());
 

@@ -10,14 +10,17 @@ import me.miki.shindo.management.nanovg.NanoVGManager;
 import me.miki.shindo.management.nanovg.font.Fonts;
 import me.miki.shindo.management.nanovg.font.LegacyIcon;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.client.gui.GuiPlayerTabOverlay;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EnumPlayerModelParts;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.scoreboard.IScoreObjectiveCriteria;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.ScorePlayerTeam;
@@ -27,236 +30,79 @@ import net.minecraft.util.IChatComponent;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.WorldSettings;
 import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.transformer.meta.MixinInner;
 
 import java.awt.*;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 @Mixin(GuiPlayerTabOverlay.class)
-public class MixinGuiPlayerTabOverlay extends Gui {
+public abstract class MixinGuiPlayerTabOverlay extends Gui {
 
 
-	@Shadow @Final private static Ordering<NetworkPlayerInfo> field_175252_a = Ordering.from(new PlayerComparator());
-	@Shadow @Final private Minecraft mc;
-	@Shadow @Final private GuiIngame guiIngame;
-	@Shadow private IChatComponent footer;
-	@Shadow private IChatComponent header;
+	@Shadow
+    public abstract String getPlayerName(NetworkPlayerInfo info);
 
-	@Shadow private long lastTimeOpened;
-	@Shadow  private boolean isBeingRendered;
+	@Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/client/gui/FontRenderer;drawStringWithShadow(Ljava/lang/String;FFI)I", ordinal = 2))
+	public int renderShindoIcon(FontRenderer fontRenderer, String text, float x, float y, int color) {
+		Minecraft mc = Minecraft.getMinecraft();
+		Collection<NetworkPlayerInfo> players = mc.getNetHandler().getPlayerInfoMap();
 
-	/**
-	 * @author MikiDevAHM
-	 * @reason Rendering Shindo Logo and Other Stuff
-	 */
-	@Overwrite
-	public String getPlayerName(NetworkPlayerInfo networkPlayerInfoIn)
-	{
-		return networkPlayerInfoIn.getDisplayName() != null ? networkPlayerInfoIn.getDisplayName().getFormattedText() : ScorePlayerTeam.formatPlayerName(networkPlayerInfoIn.getPlayerTeam(), networkPlayerInfoIn.getGameProfile().getName());
+		UUID uuid = null;
+		for (NetworkPlayerInfo info : players) {
+			String name = this.getPlayerName(info); // mesmo método usado na TabList
+			if (name.equals(text)) {
+				uuid = info.getGameProfile().getId();
+				break;
+			}
+		}
+
+		if (uuid != null) {
+			ShindoAPI api = Shindo.getInstance().getShindoAPI();
+			NanoVGManager nvg = Shindo.getInstance().getNanoVGManager();
+
+			Color iconColor;
+			if (api.isStaff(uuid.toString())) iconColor = new Color(178, 2, 2);
+			else if (api.isDiamond(uuid.toString())) iconColor = new Color(2, 194, 172);
+			else if (api.isGold(uuid.toString())) iconColor = new Color(227, 216, 0);
+			else iconColor = Color.WHITE;
+
+			float iconX = x - 10; // desenha à esquerda do texto
+			float iconY = y;
+
+			nvg.setupAndDraw(() -> {
+				nvg.drawText(LegacyIcon.SHINDO, iconX, iconY, iconColor, 8F, Fonts.LEGACYICON);
+			});
+		}
+
+		return fontRenderer.drawStringWithShadow(text, x, y, color);
 	}
 
-	/**
-	 * @author MikiDevAHM
-	 * @reason Rendering Shindo Logo and Other Stuff
-	 */
-	@Overwrite
-	public void renderPlayerlist(int width, Scoreboard scoreboardIn, ScoreObjective scoreObjectiveIn)
-	{
-		NetHandlerPlayClient nethandlerplayclient = this.mc.thePlayer.sendQueue;
-		List<NetworkPlayerInfo> list = field_175252_a.<NetworkPlayerInfo>sortedCopy(nethandlerplayclient.getPlayerInfoMap());
-		int i = 0;
-		int j = 0;
+	@Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/WorldClient;getPlayerEntityByUUID(Ljava/util/UUID;)Lnet/minecraft/entity/player/EntityPlayer;"))
+	public EntityPlayer removePlayerHead(WorldClient instance, UUID uuid) {
 
-		for (NetworkPlayerInfo networkplayerinfo : list)
-		{
-			int k = this.mc.fontRendererObj.getStringWidth(this.getPlayerName(networkplayerinfo));
-			// TODO: LEVEL HEAD
-
-			i = Math.max(i, k);
-
-			if (scoreObjectiveIn != null && scoreObjectiveIn.getRenderType() != IScoreObjectiveCriteria.EnumRenderType.HEARTS)
-			{
-				k = this.mc.fontRendererObj.getStringWidth(" " + scoreboardIn.getValueFromObjective(networkplayerinfo.getGameProfile().getName(), scoreObjectiveIn).getScorePoints());
-				j = Math.max(j, k);
-			}
+		if(TabEditorMod.getInstance().isToggled() && !TabEditorMod.getInstance().getHeadSetting().isToggled()) {
+			return null;
 		}
 
-		list = list.subList(0, Math.min(list.size(), 80));
+		return instance.getPlayerEntityByUUID(uuid);
+	}
 
-		// TODO: HYPIXEL FRIENDS FIRST IN TAB
+	@Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;isIntegratedServerRunning()Z"))
+	public boolean removePlayerHead(Minecraft instance) {
+		return instance.isIntegratedServerRunning() && showHeads();
+	}
 
-		int l3 = list.size();
-		int i4 = l3;
-		int j4;
-
-		for (j4 = 1; i4 > 20; i4 = (l3 + j4 - 1) / j4)
-		{
-			++j4;
-		}
-
-		boolean flag = this.mc.isIntegratedServerRunning() && client$showHeads()|| this.mc.getNetHandler().getNetworkManager().getIsencrypted() && client$showHeads();
-		int l;
-
-		if (scoreObjectiveIn != null)
-		{
-			if (scoreObjectiveIn.getRenderType() == IScoreObjectiveCriteria.EnumRenderType.HEARTS)
-			{
-				l = 90;
-			}
-			else
-			{
-				l = j;
-			}
-		}
-		else
-		{
-			l = 0;
-		}
-
-		int i1 = Math.min(j4 * ((flag ? 9 : 0) + i + l + 13), width - 50) / j4;
-		int j1 = width / 2 - (i1 * j4 + (j4 - 1) * 5) / 2;
-		int k1 = 10;
-		int l1 = i1 * j4 + (j4 - 1) * 5;
-		List<String> list1 = null;
-		List<String> list2 = null;
-
-		if (this.header != null)
-		{
-			list1 = this.mc.fontRendererObj.listFormattedStringToWidth(this.header.getFormattedText(), width - 50);
-
-			for (String s : list1)
-			{
-				l1 = Math.max(l1, this.mc.fontRendererObj.getStringWidth(s));
-			}
-		}
-
-		if (this.footer != null)
-		{
-			list2 = this.mc.fontRendererObj.listFormattedStringToWidth(this.footer.getFormattedText(), width - 50);
-
-			for (String s2 : list2)
-			{
-				l1 = Math.max(l1, this.mc.fontRendererObj.getStringWidth(s2));
-			}
-		}
-
-		if (list1 != null)
-		{
-			drawRect(width / 2 - l1 / 2 - 1, k1 - 1, width / 2 + l1 / 2 + 1, k1 + list1.size() * this.mc.fontRendererObj.FONT_HEIGHT, Integer.MIN_VALUE);
-
-			for (String s3 : list1)
-			{
-				int i2 = this.mc.fontRendererObj.getStringWidth(s3);
-				this.mc.fontRendererObj.drawStringWithShadow(s3, (float)(width / 2 - i2 / 2), (float)k1, -1);
-				k1 += this.mc.fontRendererObj.FONT_HEIGHT;
-			}
-
-			++k1;
-		}
-
-		drawRect(width / 2 - l1 / 2 - 1, k1 - 1, width / 2 + l1 / 2 + 1, k1 + i4 * 9, Integer.MIN_VALUE);
-
-		for (int k4 = 0; k4 < l3; ++k4)
-		{
-			int l4 = k4 / i4;
-			int i5 = k4 % i4;
-			int j2 = j1 + l4 * i1 + l4 * 5;
-			int k2 = k1 + i5 * 9;
-			drawRect(j2, k2, j2 + i1, k2 + 8, 553648127);
-			GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-			GlStateManager.enableAlpha();
-			GlStateManager.enableBlend();
-			GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-
-			if (k4 < list.size())
-			{
-				NetworkPlayerInfo networkplayerinfo1 = (NetworkPlayerInfo)list.get(k4);
-				GameProfile gameprofile = networkplayerinfo1.getGameProfile();
-
-				String s1 = this.getPlayerName(networkplayerinfo1);
-
-				Shindo instance = Shindo.getInstance();
-				ShindoAPI api = instance.getShindoAPI();
-				NanoVGManager nvg = instance.getNanoVGManager();
-
-				EntityPlayer entityplayer = this.mc.theWorld.getPlayerEntityByUUID(gameprofile.getId());
-				String uuid = gameprofile.getId().toString(); // <-- usa o GameProfile direto
-
-				boolean flag2 = api.isOnline(uuid);
-				if (flag2) {
-					Color color;
-					if (api.isStaff(uuid)) color = new Color(178, 2, 2);
-					else if (api.isDiamond(uuid)) color = new Color(2, 194, 172);
-					else if (api.isGold(uuid)) color = new Color(227, 216, 0);
-					else color = Color.WHITE;
-
-					int finalJ = j2;
-
-					nvg.setupAndDraw(() -> {
-						nvg.drawText(LegacyIcon.SHINDO, (float) finalJ, (float) k2, color, 8F, Fonts.LEGACYICON);
-					});
-
-					j2 += 10;
-				}
-
-				if (flag)
-				{
-					if(TabEditorMod.getInstance().isToggled() && TabEditorMod.getInstance().getHeadSetting().isToggled()) {
-
-						boolean flag1 = entityplayer != null && entityplayer.isWearing(EnumPlayerModelParts.CAPE) && (gameprofile.getName().equals("Dinnerbone") || gameprofile.getName().equals("Grumm"));
-						this.mc.getTextureManager().bindTexture(networkplayerinfo1.getLocationSkin());
-						int l2 = 8 + (flag1 ? 8 : 0);
-						int i3 = 8 * (flag1 ? -1 : 1);
-						Gui.drawScaledCustomSizeModalRect(j2, k2, 8.0F, (float) l2, 8, i3, 8, 8, 64.0F, 64.0F);
-
-						if (entityplayer != null && entityplayer.isWearing(EnumPlayerModelParts.HAT)) {
-							int j3 = 8 + (flag1 ? 8 : 0);
-							int k3 = 8 * (flag1 ? -1 : 1);
-							Gui.drawScaledCustomSizeModalRect(j2, k2, 40.0F, (float) j3, 8, k3, 8, 8, 64.0F, 64.0F);
-						}
-						j2 += 9;
-					}
-				}
-
-
-				if (networkplayerinfo1.getGameType() == WorldSettings.GameType.SPECTATOR)
-				{
-					s1 = EnumChatFormatting.ITALIC + s1;
-					this.mc.fontRendererObj.drawStringWithShadow(s1, (float)j2, (float)k2, -1862270977);
-				}
-				else
-				{
-					this.mc.fontRendererObj.drawStringWithShadow(s1, (float)j2, (float)k2, -1);
-				}
-
-				if (scoreObjectiveIn != null && networkplayerinfo1.getGameType() != WorldSettings.GameType.SPECTATOR)
-				{
-					int k5 = j2 + i + 1;
-					int l5 = k5 + l;
-
-					if (l5 - k5 > 5)
-					{
-						this.drawScoreboardValues(scoreObjectiveIn, k2, gameprofile.getName(), k5, l5, networkplayerinfo1);
-					}
-				}
-
-				this.drawPing(i1, j2 - (flag ? 9 : 0) - (flag2 ? 10 : 0), k2, networkplayerinfo1);
-			}
-		}
-
-		if (list2 != null)
-		{
-			k1 = k1 + i4 * 9 + 1;
-			drawRect(width / 2 - l1 / 2 - 1, k1 - 1, width / 2 + l1 / 2 + 1, k1 + list2.size() * this.mc.fontRendererObj.FONT_HEIGHT, client$removeBackground(Integer.MIN_VALUE));
-
-			for (String s4 : list2)
-			{
-				int j5 = this.mc.fontRendererObj.getStringWidth(s4);
-				this.mc.fontRendererObj.drawStringWithShadow(s4, (float)(width / 2 - j5 / 2), (float)k1, -1);
-				k1 += this.mc.fontRendererObj.FONT_HEIGHT;
-			}
-		}
+	@Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/NetworkManager;getIsencrypted()Z"))
+	public boolean removePlayerHead(NetworkManager instance) {
+		return instance.getIsencrypted() && showHeads();
 	}
 
 	/**
@@ -267,8 +113,8 @@ public class MixinGuiPlayerTabOverlay extends Gui {
 	protected void drawPing(int p_175245_1_, int p_175245_2_, int p_175245_3_, NetworkPlayerInfo networkPlayerInfoIn)
 	{
 		final int ping = networkPlayerInfoIn.getResponseTime();
-		final int x = p_175245_2_ + p_175245_1_ - (mc.fontRendererObj.getStringWidth(ping + "") >> 1) - 2;
-		final int y = p_175245_3_ + (mc.fontRendererObj.FONT_HEIGHT >> 2);
+		final int x = p_175245_2_ + p_175245_1_ - (Minecraft.getMinecraft().fontRendererObj.getStringWidth(ping + "") >> 1) - 2;
+		final int y = p_175245_3_ + (Minecraft.getMinecraft().fontRendererObj.FONT_HEIGHT >> 2);
 		if (TabEditorMod.getInstance().isToggled() && TabEditorMod.getInstance().getPingSetting().isToggled() ) {
 			int colour;
 
@@ -291,7 +137,7 @@ public class MixinGuiPlayerTabOverlay extends Gui {
 			if (ping >= 0 && ping < 10000) {
 				GlStateManager.pushMatrix();
 				GlStateManager.scale(0.5f, 0.5f, 0.5f);
-				mc.fontRendererObj.drawString("   " + ping + "", (2 * x) - 10, (2 * y), colour);
+				Minecraft.getMinecraft().fontRendererObj.drawString("   " + ping + "", (2 * x) - 10, (2 * y), colour);
 				GlStateManager.scale(2.0f, 2.0f, 2.0f);
 				GlStateManager.popMatrix();
 			}
@@ -300,7 +146,7 @@ public class MixinGuiPlayerTabOverlay extends Gui {
 		}
 
 		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-		mc.getTextureManager().bindTexture(Gui.icons);
+		Minecraft.getMinecraft().getTextureManager().bindTexture(Gui.icons);
 		int i = 0;
 		int j;
 
@@ -323,127 +169,9 @@ public class MixinGuiPlayerTabOverlay extends Gui {
 		this.zLevel -= 100.0F;
 	}
 
-	/**
-	 * @author MikiDevAHM
-	 * @reason Rendering Shindo Logo and Other Stuff
-	 */
-	@Overwrite
-	private void drawScoreboardValues(ScoreObjective p_175247_1_, int p_175247_2_, String p_175247_3_, int p_175247_4_, int p_175247_5_, NetworkPlayerInfo p_175247_6_)
-	{
-		int i = p_175247_1_.getScoreboard().getValueFromObjective(p_175247_3_, p_175247_1_).getScorePoints();
+	@ModifyConstant(method = "renderPlayerlist", constant = @Constant(intValue = Integer.MIN_VALUE))
+	public int removeBackground(int original) {
 
-		if (p_175247_1_.getRenderType() == IScoreObjectiveCriteria.EnumRenderType.HEARTS)
-		{
-			this.mc.getTextureManager().bindTexture(icons);
-
-			if (this.lastTimeOpened == p_175247_6_.func_178855_p())
-			{
-				if (i < p_175247_6_.func_178835_l())
-				{
-					p_175247_6_.func_178846_a(Minecraft.getSystemTime());
-					p_175247_6_.func_178844_b((long)(this.guiIngame.getUpdateCounter() + 20));
-				}
-				else if (i > p_175247_6_.func_178835_l())
-				{
-					p_175247_6_.func_178846_a(Minecraft.getSystemTime());
-					p_175247_6_.func_178844_b((long)(this.guiIngame.getUpdateCounter() + 10));
-				}
-			}
-
-			if (Minecraft.getSystemTime() - p_175247_6_.func_178847_n() > 1000L || this.lastTimeOpened != p_175247_6_.func_178855_p())
-			{
-				p_175247_6_.func_178836_b(i);
-				p_175247_6_.func_178857_c(i);
-				p_175247_6_.func_178846_a(Minecraft.getSystemTime());
-			}
-
-			p_175247_6_.func_178843_c(this.lastTimeOpened);
-			p_175247_6_.func_178836_b(i);
-			int j = MathHelper.ceiling_float_int((float)Math.max(i, p_175247_6_.func_178860_m()) / 2.0F);
-			int k = Math.max(MathHelper.ceiling_float_int((float)(i / 2)), Math.max(MathHelper.ceiling_float_int((float)(p_175247_6_.func_178860_m() / 2)), 10));
-			boolean flag = p_175247_6_.func_178858_o() > (long)this.guiIngame.getUpdateCounter() && (p_175247_6_.func_178858_o() - (long)this.guiIngame.getUpdateCounter()) / 3L % 2L == 1L;
-
-			if (j > 0)
-			{
-				float f = Math.min((float)(p_175247_5_ - p_175247_4_ - 4) / (float)k, 9.0F);
-
-				if (f > 3.0F)
-				{
-					for (int l = j; l < k; ++l)
-					{
-						this.drawTexturedModalRect((float)p_175247_4_ + (float)l * f, (float)p_175247_2_, flag ? 25 : 16, 0, 9, 9);
-					}
-
-					for (int j1 = 0; j1 < j; ++j1)
-					{
-						this.drawTexturedModalRect((float)p_175247_4_ + (float)j1 * f, (float)p_175247_2_, flag ? 25 : 16, 0, 9, 9);
-
-						if (flag)
-						{
-							if (j1 * 2 + 1 < p_175247_6_.func_178860_m())
-							{
-								this.drawTexturedModalRect((float)p_175247_4_ + (float)j1 * f, (float)p_175247_2_, 70, 0, 9, 9);
-							}
-
-							if (j1 * 2 + 1 == p_175247_6_.func_178860_m())
-							{
-								this.drawTexturedModalRect((float)p_175247_4_ + (float)j1 * f, (float)p_175247_2_, 79, 0, 9, 9);
-							}
-						}
-
-						if (j1 * 2 + 1 < i)
-						{
-							this.drawTexturedModalRect((float)p_175247_4_ + (float)j1 * f, (float)p_175247_2_, j1 >= 10 ? 160 : 52, 0, 9, 9);
-						}
-
-						if (j1 * 2 + 1 == i)
-						{
-							this.drawTexturedModalRect((float)p_175247_4_ + (float)j1 * f, (float)p_175247_2_, j1 >= 10 ? 169 : 61, 0, 9, 9);
-						}
-					}
-				}
-				else
-				{
-					float f1 = MathHelper.clamp_float((float)i / 20.0F, 0.0F, 1.0F);
-					int i1 = (int)((1.0F - f1) * 255.0F) << 16 | (int)(f1 * 255.0F) << 8;
-					String s = "" + (float)i / 2.0F;
-
-					if (p_175247_5_ - this.mc.fontRendererObj.getStringWidth(s + "hp") >= p_175247_4_)
-					{
-						s = s + "hp";
-					}
-
-					this.mc.fontRendererObj.drawStringWithShadow(s, (float)((p_175247_5_ + p_175247_4_) / 2 - this.mc.fontRendererObj.getStringWidth(s) / 2), (float)p_175247_2_, i1);
-				}
-			}
-		}
-		else
-		{
-			String s1 = EnumChatFormatting.YELLOW + "" + i;
-			this.mc.fontRendererObj.drawStringWithShadow(s1, (float)(p_175247_5_ - this.mc.fontRendererObj.getStringWidth(s1)), (float)p_175247_2_, 16777215);
-		}
-	}
-
-	@Mixin(targets = "net.minecraft.client.gui.GuiPlayerTabOverlay.PlayerComparator")
-	@MixinInner(mixin = "MixinGuiPlayerTabOverlay", name = "PlayerComparator")
-	static class PlayerComparator implements Comparator<NetworkPlayerInfo>
-	{
-		private PlayerComparator()
-		{
-		}
-
-		public int compare(NetworkPlayerInfo p_compare_1_, NetworkPlayerInfo p_compare_2_)
-		{
-			ScorePlayerTeam scoreplayerteam = p_compare_1_.getPlayerTeam();
-			ScorePlayerTeam scoreplayerteam1 = p_compare_2_.getPlayerTeam();
-			return ComparisonChain.start().compareTrueFirst(p_compare_1_.getGameType() != WorldSettings.GameType.SPECTATOR, p_compare_2_.getGameType() != WorldSettings.GameType.SPECTATOR).compare(scoreplayerteam != null ? scoreplayerteam.getRegisteredName() : "", scoreplayerteam1 != null ? scoreplayerteam1.getRegisteredName() : "").compare(p_compare_1_.getGameProfile().getName(), p_compare_2_.getGameProfile().getName()).result();
-		}
-	}
-
-
-	@Unique
-	public int client$removeBackground(int original) {
-		
 		if(TabEditorMod.getInstance().isToggled() && !TabEditorMod.getInstance().getBackgroundSetting().isToggled()) {
 			return new Color(0, 0, 0, 0).getRGB();
 		}
@@ -451,9 +179,9 @@ public class MixinGuiPlayerTabOverlay extends Gui {
 		return original;
 	}
 
-	@Unique
-	public int client$removeBackground2(int original) {
-		
+	@ModifyConstant(method = "renderPlayerlist", constant = @Constant(intValue = 553648127))
+	public int removeBackground2(int original) {
+
 		if(TabEditorMod.getInstance().isToggled() && !TabEditorMod.getInstance().getBackgroundSetting().isToggled()) {
 			return new Color(0, 0, 0, 0).getRGB();
 		}
@@ -461,8 +189,7 @@ public class MixinGuiPlayerTabOverlay extends Gui {
 		return original;
 	}
 
-	@Unique
-	private boolean client$showHeads() {
+	private boolean showHeads() {
 		return !(TabEditorMod.getInstance().isToggled() && !TabEditorMod.getInstance().getHeadSetting().isToggled());
 	}
 
