@@ -9,6 +9,8 @@ import me.miki.shindo.management.mods.impl.TabEditorMod;
 import me.miki.shindo.management.nanovg.NanoVGManager;
 import me.miki.shindo.management.nanovg.font.Fonts;
 import me.miki.shindo.management.nanovg.font.LegacyIcon;
+import me.miki.shindo.management.roles.ClientRole;
+import me.miki.shindo.management.roles.ClientRoleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -68,18 +70,22 @@ public abstract class MixinGuiPlayerTabOverlay extends Gui {
 			ShindoAPI api = Shindo.getInstance().getShindoAPI();
 			NanoVGManager nvg = Shindo.getInstance().getNanoVGManager();
 
-			Color iconColor;
-			if (api.isStaff(uuid.toString())) iconColor = new Color(178, 2, 2);
-			else if (api.isDiamond(uuid.toString())) iconColor = new Color(2, 194, 172);
-			else if (api.isGold(uuid.toString())) iconColor = new Color(227, 216, 0);
-			else iconColor = Color.WHITE;
+			if (api.isOnline(uuid)) {
+				Color iconColor;
 
-			float iconX = x - 10; // desenha à esquerda do texto
-			float iconY = y;
+				if (ClientRoleManager.hasRole(uuid, ClientRole.STAFF)) iconColor = new Color(178, 2, 2);
+				else if (ClientRoleManager.hasRole(uuid, ClientRole.DIAMOND)) iconColor = new Color(2, 194, 172);
+				else if (ClientRoleManager.hasRole(uuid, ClientRole.GOLD)) iconColor = new Color(227, 216, 0);
+				else iconColor = Color.WHITE;
 
-			nvg.setupAndDraw(() -> {
-				nvg.drawText(LegacyIcon.SHINDO, iconX, iconY, iconColor, 8F, Fonts.LEGACYICON);
-			});
+				float iconX = x; // desenha à esquerda do texto
+				float iconY = y;
+
+				nvg.setupAndDraw(() -> {
+					nvg.drawText(LegacyIcon.SHINDO, iconX, iconY, iconColor, 8F, Fonts.LEGACYICON);
+				});
+				x += 10;
+			}
 		}
 
 		return fontRenderer.drawStringWithShadow(text, x, y, color);

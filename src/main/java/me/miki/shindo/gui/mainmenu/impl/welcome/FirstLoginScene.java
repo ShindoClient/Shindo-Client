@@ -39,7 +39,11 @@ public class FirstLoginScene extends AccountScene {
 		}
 		
 		if(fadeAnimation.isDone(Direction.BACKWARDS)) {
-			this.setCurrentScene(this.getSceneByClass(LastMessageScene.class));
+			if(Shindo.getInstance().getDownloadManager().isDownloaded()) {
+				this.setCurrentScene(this.getSceneByClass(LastMessageScene.class));
+			} else {
+				this.setCurrentScene(this.getSceneByClass(CheckingDataScene.class));
+			}
 		}
 		
 		BlurUtils.drawBlurScreen(14);

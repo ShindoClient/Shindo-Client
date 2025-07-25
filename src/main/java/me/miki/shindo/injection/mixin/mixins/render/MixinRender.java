@@ -3,6 +3,8 @@ package me.miki.shindo.injection.mixin.mixins.render;
 import me.miki.shindo.Shindo;
 import me.miki.shindo.ShindoAPI;
 import me.miki.shindo.management.nanovg.NanoVGManager;
+import me.miki.shindo.management.roles.ClientRole;
+import me.miki.shindo.management.roles.ClientRoleManager;
 import me.miki.shindo.utils.render.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
@@ -19,6 +21,8 @@ import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+
+import java.util.UUID;
 
 @Mixin(Render.class)
 public abstract class MixinRender <T extends Entity>  {
@@ -64,7 +68,7 @@ public abstract class MixinRender <T extends Entity>  {
 
             if (entityIn instanceof AbstractClientPlayer) {
                 AbstractClientPlayer player = (AbstractClientPlayer) entityIn;
-                String uuid = player.getGameProfile().getId().toString();
+                UUID uuid = player.getGameProfile().getId();
 
                 Shindo instance = Shindo.getInstance();
                 ShindoAPI api = instance.getShindoAPI();
@@ -82,9 +86,9 @@ public abstract class MixinRender <T extends Entity>  {
                     GlStateManager.depthMask(true);
 
                     String texture;
-                    if (api.isStaff(uuid)) texture = "logo_red";
-                    else if (api.isDiamond(uuid)) texture = "logo_blue";
-                    else if (api.isGold(uuid)) texture = "logo_yellow";
+                    if (ClientRoleManager.hasRole(uuid, ClientRole.STAFF)) texture = "logo_red";
+                    else if (ClientRoleManager.hasRole(uuid, ClientRole.DIAMOND)) texture = "logo_blue";
+                    else if (ClientRoleManager.hasRole(uuid, ClientRole.GOLD)) texture = "logo_yellow";
                     else texture = "logo";
 
                     Minecraft.getMinecraft().getTextureManager().bindTexture(new ResourceLocation("shindo/logos/" + texture + ".png"));

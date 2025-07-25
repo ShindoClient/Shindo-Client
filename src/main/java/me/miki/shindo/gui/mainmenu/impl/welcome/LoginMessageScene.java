@@ -53,11 +53,7 @@ public class LoginMessageScene extends MainMenuScene {
 			}
 			
 			if(fadeAnimation.isDone(Direction.BACKWARDS)) {
-				if(Shindo.getInstance().getDownloadManager().isDownloaded()) {
-					this.setCurrentScene(this.getSceneByClass(FirstLoginScene.class));
-				} else {
-					this.setCurrentScene(this.getSceneByClass(CheckingDataScene.class));
-				}
+				this.setCurrentScene(this.getSceneByClass(FirstLoginScene.class));
 			}
 		}
 	}

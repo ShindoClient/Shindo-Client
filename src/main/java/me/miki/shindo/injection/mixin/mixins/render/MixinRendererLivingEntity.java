@@ -8,6 +8,8 @@ import me.miki.shindo.management.event.impl.EventRendererLivingEntity;
 import me.miki.shindo.management.mods.impl.NametagMod;
 import me.miki.shindo.management.mods.impl.Skin3DMod;
 import me.miki.shindo.management.nanovg.NanoVGManager;
+import me.miki.shindo.management.roles.ClientRole;
+import me.miki.shindo.management.roles.ClientRoleManager;
 import me.miki.shindo.utils.render.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
@@ -27,6 +29,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.UUID;
 
 @Mixin(RendererLivingEntity.class)
 public abstract class MixinRendererLivingEntity <T extends EntityLivingBase> extends Render<T> {
@@ -74,7 +78,7 @@ public abstract class MixinRendererLivingEntity <T extends EntityLivingBase> ext
 
 					if (entity instanceof AbstractClientPlayer) {
 						AbstractClientPlayer player = (AbstractClientPlayer) entity;
-						String uuid = player.getGameProfile().getId().toString();
+						UUID uuid = player.getGameProfile().getId();
 
 						Shindo instance = Shindo.getInstance();
 						ShindoAPI api = instance.getShindoAPI();
@@ -91,9 +95,9 @@ public abstract class MixinRendererLivingEntity <T extends EntityLivingBase> ext
 							GlStateManager.depthMask(true);
 
 							String texture;
-							if (api.isStaff(uuid)) texture = "logo_red";
-							else if (api.isDiamond(uuid)) texture = "logo_blue";
-							else if (api.isGold(uuid)) texture = "logo_yellow";
+							if (ClientRoleManager.hasRole(uuid, ClientRole.STAFF)) texture = "logo_red";
+							else if (ClientRoleManager.hasRole(uuid, ClientRole.DIAMOND)) texture = "logo_blue";
+							else if (ClientRoleManager.hasRole(uuid, ClientRole.GOLD)) texture = "logo_yellow";
 							else texture = "logo";
 
 							Minecraft.getMinecraft().getTextureManager().bindTexture(new ResourceLocation("shindo/logos/" + texture + ".png"));

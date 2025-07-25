@@ -192,7 +192,7 @@ public class CapeManager {
 	}
 
 	public boolean canUseCape(UUID uuid, Cape cape) {
-		return ClientRoleManager.hasPermission(uuid, cape.getRequiredRole());
+		return ClientRoleManager.hasRole(uuid, cape.getRequiredRole());
 	}
 
 	public TranslateText getTranslateError(ClientRole role) {

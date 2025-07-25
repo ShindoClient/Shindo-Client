@@ -42,8 +42,6 @@ public class ConfigHandler {
                     for (int i = 0; i < array.size(); i++) {
                         enabledPacks.add(array.get(i).getAsString());
                     }
-                } else {
-                    enabledPacks = Minecraft.getMinecraft().gameSettings.resourcePacks;
                 }
             } catch (IOException e) {
                 e.printStackTrace();

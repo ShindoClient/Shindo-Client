@@ -90,4 +90,27 @@ public class DownloadManager {
     public boolean isDownloaded() {
         return downloaded;
     }
+
+    public DownloadFile getDownloadByFile(String fileName) {
+        for (DownloadFile file : downloadFiles) {
+            if (file.getFileName().equals(fileName)) {
+                return file;
+            }
+        }
+        return null;
+    }
+
+    public long getTotalSize() {
+        return downloadFiles.stream().mapToLong(DownloadFile::getSize).sum();
+    }
+
+    public long getTotalDownloaded() {
+        return downloadFiles.stream().mapToLong(DownloadFile::getDownloadedBytes).sum();
+    }
+
+    public float getProgress() {
+        long total = getTotalSize();
+        if (total == 0) return 0f;
+        return (float) getTotalDownloaded() / total;
+    }
 }

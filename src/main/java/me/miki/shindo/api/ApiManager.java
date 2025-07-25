@@ -110,7 +110,7 @@ public class ApiManager {
         return accountTypeCache.get(uuid);
     }
 
-    public boolean hasPrivilege(String uuid, String privilegeKey) {
+    public boolean hasRole(String uuid, String privilegeKey) {
         watchUUID(uuid); // Garante que o cache esteja populado
         JsonArray privs = privilegesCache.get(uuid);
 
@@ -123,18 +123,6 @@ public class ApiManager {
         }
 
         return false;
-    }
-
-    public boolean isStaff(String uuid) {
-        return hasPrivilege(uuid, "staff");
-    }
-
-    public boolean isDiamond(String uuid) {
-        return hasPrivilege(uuid, "diamond");
-    }
-
-    public boolean isGold(String uuid) {
-        return hasPrivilege(uuid, "gold");
     }
 
     private void watchUUID(String uuid) {

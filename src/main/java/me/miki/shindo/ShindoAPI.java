@@ -5,9 +5,11 @@ import me.miki.shindo.api.utils.SSLBypass;
 import me.miki.shindo.gui.mainmenu.GuiShindoMainMenu;
 import me.miki.shindo.gui.modmenu.GuiModMenu;
 import me.miki.shindo.management.file.FileManager;
+import me.miki.shindo.management.roles.ClientRoleManager;
 import net.minecraft.client.Minecraft;
 
 import java.io.File;
+import java.util.UUID;
 
 public class ShindoAPI {
 
@@ -46,12 +48,14 @@ public class ShindoAPI {
         // Inicializa o ApiManager com dados corretos
         this.apiManager = new ApiManager(uuid, username, accountType);
         apiManager.notifyEvent("join");
+        ClientRoleManager.start();
     }
 
     public void disconnect() {
         if (apiManager != null) {
             apiManager.notifyEvent("leave");
             apiManager.shutdown();
+            ClientRoleManager.stop();
         }
     }
 
@@ -74,48 +78,13 @@ public class ShindoAPI {
     public boolean isFirstLogin() {
         return !firstLoginFile.exists();
     }
-    
-    public boolean isStaff(String uuid) {
-        //ShindoLogger.info("[API] UUID: " + uuid);
-        //ShindoLogger.info("[API] STAFF: " + apiManager.isStaff(uuid));
-        return apiManager.isStaff(uuid);
+
+    public boolean isOnline(UUID uuid) {
+        return  apiManager.isOnline(uuid.toString());
     }
 
-    public boolean isDiamond(String uuid) {
-        //ShindoLogger.info("[API] UUID: " + uuid);
-        //ShindoLogger.info("[API] DIAMOND: " + apiManager.isDiamond(uuid));
-        return apiManager.isDiamond(uuid);
-    }
-
-    public boolean isGold(String uuid) {
-        //ShindoLogger.info("[API] UUID: " + uuid);
-        //ShindoLogger.info("[API] GOLD: " + apiManager.isGold(uuid));
-        return apiManager.isGold(uuid);
-    }
-
-    public boolean isOnline(String uuid) {
-        //ShindoLogger.info("[API] UUID: " + uuid);
-        //ShindoLogger.info("[API] ONLINE: " + apiManager.isOnline(uuid));
-        return  apiManager.isOnline(uuid);
-    }
-
-    public boolean hasPrivilege(String uuid, String privilege) {
-        //ShindoLogger.info("[API] UUID: " + uuid);
-        //ShindoLogger.info("[API] PRIVILEGE: " + apiManager.hasPrivilege(uuid, privilege));
-        return apiManager.hasPrivilege(uuid, privilege);
+    public boolean hasRole(String uuid, String role) {
+        return apiManager.hasRole(uuid, role);
 
     }
-
-    public String getName (String uuid) {
-        //ShindoLogger.info("[API] UUID: " + uuid);
-        //ShindoLogger.info("[API] getName: " + apiManager.getName(uuid));
-        return apiManager.getName(uuid);
-    }
-
-    public String getAccountType (String uuid) {
-        //ShindoLogger.info("[API] UUID: " + uuid);
-        //ShindoLogger.info("[API] getAccountType: " + apiManager.getAccountType(uuid));
-        return apiManager.getAccountType(uuid);
-    }
-
 }

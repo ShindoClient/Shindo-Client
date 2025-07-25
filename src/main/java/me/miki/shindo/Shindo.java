@@ -76,8 +76,8 @@ public class Shindo {
 	
 	public Shindo() {
 		name = "Shindo";
-		version = "5.1.06";
-		verIdentifier = 5106;
+		version = "5.1.07";
+		verIdentifier = 5107;
 	}
 	
 	public void start() {
@@ -122,8 +122,6 @@ public class Shindo {
 		update = new Update();
 		update.check();
 
-		//RPOConfig.init();
-
 		eventManager.register(new ShindoHandler());
 
 		InternalSettingsMod.getInstance().setToggled(true);
@@ -135,7 +133,6 @@ public class Shindo {
 		ShindoLogger.info("Stopping Shindo");
 		profileManager.save();
 		accountManager.save();
-		ClientRoleManager.stop();
 		shindoAPI.disconnect();
 		Sound.play("shindo/audio/close.wav", true);
 	}

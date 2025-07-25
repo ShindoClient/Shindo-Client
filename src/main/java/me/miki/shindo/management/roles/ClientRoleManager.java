@@ -2,6 +2,7 @@ package me.miki.shindo.management.roles;
 
 import me.miki.shindo.Shindo;
 import me.miki.shindo.ShindoAPI;
+import me.miki.shindo.logger.ShindoLogger;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -10,10 +11,9 @@ import java.util.concurrent.TimeUnit;
 
 public class ClientRoleManager {
 
-    private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private static final int UPDATE_INTERVAL_SECONDS = 30; // ajuste o tempo conforme necessário
-
     private static final Map<UUID, ClientRole> roleCache = new HashMap<>();
+
+    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     private static final List<ClientRole> ROLE_HIERARCHY = Arrays.asList(
             ClientRole.STAFF,
@@ -22,12 +22,12 @@ public class ClientRoleManager {
             ClientRole.MEMBER
     );
 
-    public static void start() {
-        scheduler.scheduleAtFixedRate(ClientRoleManager::clearCache, 0, UPDATE_INTERVAL_SECONDS, TimeUnit.SECONDS);
+    public static void start(){
+        executor.scheduleAtFixedRate(ClientRoleManager::clearCache, 0, 30, TimeUnit.SECONDS);
     }
 
-    public static void stop() {
-        scheduler.shutdownNow();
+    public static void stop(){
+        executor.shutdownNow();
     }
 
     public static ClientRole getRole(UUID uuid) {
@@ -40,10 +40,15 @@ public class ClientRoleManager {
 
         ClientRole detectedRole = ClientRole.MEMBER;
 
+        ShindoLogger.info("Checking role " + uuidStr + " for " + detectedRole);
         for (ClientRole role : ROLE_HIERARCHY) {
-            if (!role.equals(ClientRole.MEMBER) &&
-                    api.hasPrivilege(uuidStr, role.name().toLowerCase(Locale.ROOT))) {
+            if (api.hasRole(uuidStr, role.name().toLowerCase(Locale.ROOT))) {
                 detectedRole = role;
+                ShindoLogger.info("Detected role: " + detectedRole.name());
+                break;
+            } else {
+                detectedRole = ClientRole.MEMBER;
+                ShindoLogger.info("Detected role: " + detectedRole.name());
                 break;
             }
         }
@@ -52,7 +57,7 @@ public class ClientRoleManager {
         return detectedRole;
     }
 
-    public static boolean hasPermission(UUID uuid, ClientRole required) {
+    public static boolean hasRole(UUID uuid, ClientRole required) {
         return getRole(uuid).hasPermission(required);
     }
 

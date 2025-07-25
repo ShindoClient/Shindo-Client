@@ -2,7 +2,9 @@ package me.miki.shindo.utils.network;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import me.miki.shindo.Shindo;
 import me.miki.shindo.logger.ShindoLogger;
+import me.miki.shindo.management.remote.download.file.DownloadFile;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -121,77 +123,75 @@ public class HttpUtils {
         return true;
     }
 
+
     public static boolean downloadFile(String url, File outputFile, String userAgent, int timeout, boolean useCaches, long expectedSize) {
-        url = url.replace(" ", "%20");
-        File tempFile = new File(outputFile.getAbsolutePath() + ".part");
+        InputStream in = null;
+        RandomAccessFile raf = null;
+        HttpURLConnection connection = null;
 
         try {
-            long downloadedLength = 0;
-            if (tempFile.exists()) {
-                downloadedLength = tempFile.length();
-            }
-
-            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            URL downloadUrl = new URL(url);
+            connection = (HttpURLConnection) downloadUrl.openConnection();
             connection.setRequestProperty("User-Agent", userAgent);
+            connection.setUseCaches(useCaches);
             connection.setConnectTimeout(timeout);
             connection.setReadTimeout(timeout);
-            connection.setUseCaches(useCaches);
 
-            if (downloadedLength > 0) {
-                connection.setRequestProperty("Range", "bytes=" + downloadedLength + "-");
+            long existingLength = 0;
+            if (outputFile.exists()) {
+                existingLength = outputFile.length();
+                connection.setRequestProperty("Range", "bytes=" + existingLength + "-");
             }
+
+            connection.connect();
 
             int responseCode = connection.getResponseCode();
-            if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_PARTIAL) {
-                ShindoLogger.error("Server returned HTTP code: " + responseCode);
+            if (responseCode != HttpURLConnection.HTTP_OK &&
+                    responseCode != HttpURLConnection.HTTP_PARTIAL) {
                 return false;
             }
 
-            try (InputStream in = connection.getInputStream();
-                 RandomAccessFile raf = new RandomAccessFile(tempFile, "rw")) {
-                raf.seek(downloadedLength);
+            in = connection.getInputStream();
+            raf = new RandomAccessFile(outputFile, "rw");
+            raf.seek(existingLength);
 
-                byte[] buffer = new byte[8192];
-                int read;
-                while ((read = in.read(buffer)) != -1) {
-                    raf.write(buffer, 0, read);
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                raf.write(buffer, 0, read);
+
+                if (outputFile.getName().endsWith(".part")) {
+                    String fileName = outputFile.getName().replace(".part", "");
+                    DownloadFile df = Shindo.getInstance().getDownloadManager().getDownloadByFile(fileName);
+                    if (df != null) {
+                        df.addDownloadedBytes(read);
+                    }
                 }
             }
 
-            if (tempFile.length() == expectedSize) {
-                if (outputFile.exists()) outputFile.delete();
-                if (!tempFile.renameTo(outputFile)) {
-                    ShindoLogger.error("Failed to rename temp file to final file");
-                    return false;
-                }
-            } else {
-                ShindoLogger.error("Download incomplete: expected " + expectedSize + ", but got " + tempFile.length());
-                return false;
-            }
+            long totalLength = outputFile.length();
+            return expectedSize <= 0 || totalLength >= expectedSize;
 
-        } catch (Exception e) {
-            ShindoLogger.error("Failed to download file", e);
+        } catch (IOException e) {
+            e.printStackTrace();
             return false;
+
+        } finally {
+            try {
+                if (in != null) in.close();
+                if (raf != null) raf.close();
+            } catch (IOException ignored) {}
+
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
-
-        return true;
-    }
-
-    public static boolean downloadFile(String url, File outputFile, String userAgent, long expectedSize) {
-        return downloadFile(url, outputFile, userAgent, 5000, false, expectedSize);
     }
 
     public static boolean downloadFile(String url, File outputFile, long expectedSize) {
         return downloadFile(url, outputFile, UserAgents.MOZILLA, 5000, false, expectedSize);
     }
 
-    public static boolean downloadFile(String url, File outputFile, String userAgent) {
-        return downloadFile(url, outputFile, userAgent, 5000, false);
-    }
-
-    public static boolean downloadFile(String url, File outputFile) {
-        return downloadFile(url, outputFile, UserAgents.MOZILLA, 5000, false);
-    }
 
     public static HttpURLConnection setupConnection(String url, String userAgent, int timeout, boolean useCaches) {
         try {

@@ -3,25 +3,25 @@ package me.miki.shindo.injection.mixin.mixins.client;
 import eu.shoroa.contrib.render.ShBlur;
 import me.miki.shindo.Shindo;
 import me.miki.shindo.gui.GuiBetterResourcePacks;
+import me.miki.shindo.gui.GuiGameMenu;
 import me.miki.shindo.gui.GuiSplashScreen;
 import me.miki.shindo.injection.interfaces.IMixinEntityLivingBase;
 import me.miki.shindo.injection.interfaces.IMixinMinecraft;
 import me.miki.shindo.logger.ShindoLogger;
+import me.miki.shindo.management.addons.rpo.RPOConfig;
 import me.miki.shindo.management.event.impl.*;
 import me.miki.shindo.management.mods.impl.*;
 import me.miki.shindo.viaversion.fixes.AttackOrder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.gui.GuiMainMenu;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiScreenResourcePacks;
-import net.minecraft.client.gui.GuiScreenWorking;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.particle.EffectRenderer;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.DefaultResourcePack;
+import net.minecraft.client.resources.ResourcePackRepository;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.stream.IStream;
@@ -42,8 +42,14 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.io.File;
+
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraft implements IMixinMinecraft {
+
+	@Shadow @Final private File fileResourcepacks;
+
+	@Shadow private ResourcePackRepository mcResourcePackRepository;
 
 	@Shadow private Timer timer = new Timer(20.0F);
 	
@@ -95,6 +101,11 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
     public void preStartGame(CallbackInfo ci) {
     	Shindo.getInstance().start();
     }
+
+	@Inject(method = "startGame", at = @At("TAIL"))
+	private void onGameStartCompleted(CallbackInfo ci) {
+		RPOConfig.init();
+	}
     
 	@Redirect(method = "runTick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;next()Z"))
 	public boolean nextMouse() {
@@ -309,19 +320,24 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
     	}
     }
 
-	//@Inject(method = "displayGuiScreen", at = @At("HEAD"), cancellable = true)
-	//public void displayGuiScreenInjectHead(GuiScreen guiScreenIn, CallbackInfo ci) {
-	//
- 	//	if (guiScreenIn instanceof GuiScreenResourcePacks && !(guiScreenIn instanceof GuiBetterResourcePacks)) {
-	//		GuiScreen parent = Minecraft.getMinecraft().currentScreen;
-	//
- 	//		ci.cancel();
-	//
- 	//		Minecraft.getMinecraft().addScheduledTask(() -> displayGuiScreen(new GuiBetterResourcePacks(parent)));
-	//	}
-	//}
+	@Inject(method = "displayGuiScreen", at = @At("HEAD"), cancellable = true)
+	public void displayGuiScreenInjectHead(GuiScreen guiScreenIn, CallbackInfo ci) {
 
+ 		if (guiScreenIn instanceof GuiScreenResourcePacks && !(guiScreenIn instanceof GuiBetterResourcePacks)) {
+			GuiScreen parent = Minecraft.getMinecraft().currentScreen;
 
+ 			ci.cancel();
+
+ 			Minecraft.getMinecraft().addScheduledTask(() -> displayGuiScreen(new GuiBetterResourcePacks(parent)));
+		}
+
+		 if (guiScreenIn instanceof GuiIngameMenu) {
+
+			 ci.cancel();
+
+			 Minecraft.getMinecraft().addScheduledTask(() -> displayGuiScreen(new GuiGameMenu()));
+		 }
+	}
     
     @Inject(method = "loadWorld(Lnet/minecraft/client/multiplayer/WorldClient;Ljava/lang/String;)V", at = @At("HEAD"))
     private void clearLoadedMaps(WorldClient worldClientIn, String loadingMessage, CallbackInfo ci) {
@@ -431,6 +447,7 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
     public Entity getRenderViewEntity() {
     	return renderViewEntity;
     }
+
     
 	@Override
 	@Accessor
@@ -547,5 +564,20 @@ public abstract class MixinMinecraft implements IMixinMinecraft {
 	@Inject(method = "resize", at = @At("TAIL"))
 	public void inject$resize(int width, int height, CallbackInfo ci) {
 		ShBlur.getInstance().resize();
+	}
+
+	@Override
+	public File getFileResourcepacks() {
+		return fileResourcepacks;
+	}
+
+	@Override
+	public ResourcePackRepository getMcResourcePackRepository() {
+		return mcResourcePackRepository;
+	}
+
+	@Override
+	public void setMcResourcePackRepository(ResourcePackRepository repo) {
+		this.mcResourcePackRepository = repo;
 	}
 }

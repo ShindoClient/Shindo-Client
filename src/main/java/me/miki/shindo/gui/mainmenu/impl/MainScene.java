@@ -41,7 +41,6 @@ public class MainScene extends MainMenuScene {
 
 			Shindo.getInstance().getShindoAPI().connect();
 			Shindo.getInstance().getNotificationManager().post("[API]", "Is now Connected", NotificationType.INFO);
-			ClientRoleManager.start();
 			isConnected = true;
 		}
 	}

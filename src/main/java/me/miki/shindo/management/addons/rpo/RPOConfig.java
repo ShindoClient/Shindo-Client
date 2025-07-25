@@ -18,7 +18,7 @@ public class RPOConfig {
 
         Minecraft.getMinecraft().gameSettings.resourcePacks.clear();
         Minecraft.getMinecraft().gameSettings.resourcePacks.addAll(enabled);
-
+        Minecraft.getMinecraft().gameSettings.saveOptions();
         Minecraft.getMinecraft().refreshResources();
     }
 

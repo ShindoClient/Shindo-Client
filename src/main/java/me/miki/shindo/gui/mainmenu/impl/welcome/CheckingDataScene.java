@@ -39,9 +39,22 @@ public class CheckingDataScene extends MainMenuScene {
 		if(fadeAnimation != null) {
 			
 			nvg.setupAndDraw(() -> {
-				nvg.drawCenteredText(message, sr.getScaledWidth() / 2, 
-						(sr.getScaledHeight() / 2) - (nvg.getTextHeight(message, 26, Fonts.REGULAR) / 2), 
+				nvg.drawCenteredText(message, sr.getScaledWidth() / 2F,
+						(sr.getScaledHeight() / 2F) - (nvg.getTextHeight(message, 26, Fonts.REGULAR) / 2),
 						new Color(255, 255, 255, (int) (fadeAnimation.getValueFloat() * 255)), 26, Fonts.REGULAR);
+
+				float progress = Shindo.getInstance().getDownloadManager().getProgress();
+				float widthBar = 300;
+				float heightBar = 20;
+				float x = sr.getScaledWidth() / 2F - widthBar / 2F;
+				float y = sr.getScaledHeight() / 2F + 35;
+
+				nvg.drawRoundedRect(x, y, widthBar, heightBar, 6, new Color(50, 50, 50, 120));
+				nvg.drawRoundedRect(x, y, widthBar * progress, heightBar, 6, new Color(0, 160, 255, 200));
+
+				String percentageText = String.format("%.0f%%", progress * 100f);
+				nvg.drawCenteredText(percentageText, sr.getScaledWidth() / 2F, y + heightBar / 2F - 8,
+						new Color(255, 255, 255, 200), 16, Fonts.REGULAR);
 			});
 			
 			if(Shindo.getInstance().getDownloadManager().isDownloaded() && fadeAnimation.getDirection().equals(Direction.FORWARDS)) {

@@ -2,7 +2,6 @@ package me.miki.shindo.management.addons.rpo.repository;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,14 +20,9 @@ public class ResourcePackRepositoryCustom extends ResourcePackRepository {
         Minecraft mc = Minecraft.getMinecraft();
 
         try {
-            Field fieldRepository = Minecraft.class.getDeclaredField("mcResourcePackRepository");
-            fieldRepository.setAccessible(true);
+            File fileResourcepacks = ((IMixinMinecraft) mc).getFileResourcepacks();
 
-            Field fieldFileResourcepacks = Minecraft.class.getDeclaredField("fileResourcepacks");
-            fieldFileResourcepacks.setAccessible(true);
-
-            File fileResourcepacks = (File) fieldFileResourcepacks.get(mc);
-            ResourcePackRepository originalRepo = (ResourcePackRepository) fieldRepository.get(mc);
+            ResourcePackRepository originalRepo = (ResourcePackRepository) ((IMixinMinecraft) mc).getMcResourcePackRepository();
 
             ResourcePackRepositoryCustom customRepo = new ResourcePackRepositoryCustom(
                     fileResourcepacks,
@@ -39,7 +33,7 @@ public class ResourcePackRepositoryCustom extends ResourcePackRepository {
                     enabledPacks
             );
 
-            fieldRepository.set(mc, customRepo);
+            ((IMixinMinecraft) mc).setMcResourcePackRepository(customRepo);
         } catch (Throwable t) {
             throw new RuntimeException("Failed to override resource pack repository", t);
         }
@@ -62,8 +56,8 @@ public class ResourcePackRepositoryCustom extends ResourcePackRepository {
     private static Constructor<Entry> entryConstructor;
 
     private List<Entry> repositoryEntriesAll = Lists.newArrayList();
-    private List<Entry> repositoryEntries = Lists.newArrayList();
-    private boolean isReady;
+    private final List<Entry> repositoryEntries = Lists.newArrayList();
+    private final boolean isReady;
 
     public ResourcePackRepositoryCustom(File dirResourcepacks, File dirServerResourcepacks, IResourcePack rprDefaultResourcePack, IMetadataSerializer rprMetadataSerializer, GameSettings settings, List<String> enabledPacks) {
         super(dirResourcepacks, dirServerResourcepacks, rprDefaultResourcePack, rprMetadataSerializer, settings);
